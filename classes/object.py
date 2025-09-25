@@ -20,8 +20,10 @@ class Crystal(FallingObject):
     def __init__(self, screen_width):
         x = random.randint(20, screen_width - 40)
         super().__init__(x, -30, 20, 20, (0, 255, 0), 5)  # Зеленый
+        self.points = 1
 
 class Asteroid(FallingObject):
     def __init__(self, screen_width):
         x = random.randint(20, screen_width - 50)
         super().__init__(x, -30, 30, 30, (255, 0, 0), 5)  # Красный
+        self.damages = 1
