@@ -7,7 +7,7 @@ class Player:
         self.speed = 8
         self.color = (0, 0, 255)  # Синий цвет
         self.score = 0
-        self.lives = 3
+        self.lives = 1
 
     def move(self, direction):
         self.rect.x += direction * self.speed
