@@ -58,13 +58,15 @@ def get_name(screen, font, small_font, SCREEN_WIDTH, SCREEN_HEIGHT, clock):
         text2 = font.render(input_text, True, (255, 255, 255))
         text3 = small_font.render("Нажмите ENTER", True, (200, 200, 200))
         text4 = small_font.render(
-            "Для перемещения корабля используйте стрелки", True, (0, 0, 255)
+            "Для перемещения корабля используйте стрелки", True, (200, 200, 200)
         )
+        text5 = small_font.render("Соберите 50 кристаллов, не сталкиваясь с астероидами!", True, (200,200,200))
 
         screen.blit(text1, (SCREEN_WIDTH // 2 - text1.get_width() // 2, 250))
         screen.blit(text2, (SCREEN_WIDTH // 2 - text2.get_width() // 2, 300))
         screen.blit(text3, (SCREEN_WIDTH // 2 - text3.get_width() // 2, 350))
         screen.blit(text4, (SCREEN_WIDTH // 2 - text4.get_width() // 2, 400))
+        screen.blit(text5, (SCREEN_WIDTH // 2 - text5.get_width() // 2, 450))
 
         pygame.display.flip()
         clock.tick(60)
@@ -72,17 +74,17 @@ def get_name(screen, font, small_font, SCREEN_WIDTH, SCREEN_HEIGHT, clock):
     return player_name, True
 
 
-def name_input():
+def handle_input():
     keys = pygame.key.get_pressed()
     dx, dy = 0, 0
 
-    if keys[pygame.K_a]:
+    if keys[pygame.K_a] or keys[pygame.K_LEFT]:
         dx -= 1
-    if keys[pygame.K_d]:
+    if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
         dx += 1
-    if keys[pygame.K_w]:
+    if keys[pygame.K_w] or keys[pygame.K_UP]:
         dy -= 1
-    if keys[pygame.K_s]:
+    if keys[pygame.K_s] or keys[pygame.K_DOWN]:
         dy += 1
 
     return dx, dy
@@ -105,7 +107,7 @@ def update_objects(player, crystals, asteroids, SCREEN_HEIGHT, WINNING_SCORE):
     for asteroid in asteroids[:]:
         asteroid.update()
         if asteroid.rect.colliderect(player.rect):
-            if not player.take_damage(asteroid.damages):
+            if not player.take_damage(asteroid.damage):
                 return False, victory
             asteroids.remove(asteroid)
         elif asteroid.is_off_screen(SCREEN_HEIGHT):
@@ -114,25 +116,54 @@ def update_objects(player, crystals, asteroids, SCREEN_HEIGHT, WINNING_SCORE):
     return True, victory
 
 
-def draw_screen(
-    screen, player, crystals, asteroids, player_name, game_time, font, SCREEN_WIDTH, WINNING_SCORE
-):
-    screen.fill((0, 0, 0))
+def create_stars(SCREEN_WIDTH, SCREEN_HEIGHT):
+    stars = []
+    for _ in range(100):
+        x = random.randint(0, SCREEN_WIDTH)
+        y = random.randint(0, SCREEN_HEIGHT)
+        size = random.randint(1, 3)
+        brightness = random.randint(150, 255)
+        stars.append((x, y, size, brightness))
+    return stars
 
-    player.draw(screen)
+
+def draw_background(screen, stars, SCREEN_WIDTH, SCREEN_HEIGHT):
+    screen.fill((10, 10, 40))
+
+    for x, y, size, brightness in stars:
+        color = (brightness, brightness, brightness)
+        pygame.draw.circle(screen, color, (int(x), int(y)), size)
+
+
+def draw_game_screen(
+    screen,
+    player,
+    crystals,
+    asteroids,
+    player_name,
+    game_time,
+    font,
+    SCREEN_WIDTH,
+    stars,
+    SCREEN_HEIGHT,
+):
+    draw_background(screen, stars, SCREEN_WIDTH, SCREEN_HEIGHT)
+
     for crystal in crystals:
         crystal.draw(screen)
     for asteroid in asteroids:
         asteroid.draw(screen)
-
+    player.draw(screen)
     minutes = int(game_time) // 60
     seconds = int(game_time) % 60
     milliseconds = int((game_time - int(game_time)) * 1000)
 
     time_text = font.render(
-        f"Время: {minutes:02d}:{seconds:02d}:{milliseconds:03d}", True, (255, 255, 255)
+        f"Время: {minutes:02d}:{seconds:02d}.{milliseconds:03d}", True, (255, 255, 255)
     )
-    score_text = font.render(f"Очки: {player.score} / {WINNING_SCORE}", True, (255, 255, 255))
+    score_text = font.render(
+        f"Очки: {player.score}", True, (255, 255, 255)
+    )
     lives_text = font.render(f"Жизни: {player.lives}", True, (255, 255, 255))
     name_text = font.render(f"Игрок: {player_name}", True, (255, 255, 255))
 
@@ -142,7 +173,7 @@ def draw_screen(
     screen.blit(time_text, (SCREEN_WIDTH - 250, 50))
 
 
-def draw_screen_end(
+def draw_game_over_screen(
     screen,
     victory,
     player,
@@ -162,24 +193,22 @@ def draw_screen_end(
     milliseconds = int((final_time - int(final_time)) * 1000)
 
     if victory:
-        game_over_text = font.render("Победа!", True, (50, 255, 50))
+        game_over_text = font.render("ПОБЕДА! 🏆", True, (50, 255, 50))
         score_text = font.render(
-            f"Собрано кристаллов: {player.score}. ", True, (255, 255, 255)
+            f"Собрано кристаллов: {player.score}/{WINNING_SCORE}", True, (255, 255, 255)
         )
         time_message = font.render(
-            f"Время прохождения: {minutes:02d}:{seconds:02d}:{milliseconds:03d}",
+            f"Время прохождения: {minutes:02d}:{seconds:02d}.{milliseconds:03d}",
             True,
             (255, 255, 255),
         )
     else:
         game_over_text = font.render("ИГРА ОКОНЧЕНА!", True, (255, 150, 50))
         score_text = font.render(
-            f"Собрано кристаллов: {player.score} Вы не собрали: {WINNING_SCORE - player.score}",
-            True,
-            (255, 255, 255),
+            f"Собрано кристаллов: {player.score}/{WINNING_SCORE}", True, (255, 255, 255)
         )
         time_message = font.render(
-            f"Вы продержались: {minutes:02d}:{seconds:02d}:{milliseconds:03d}",
+            f"Время игры: {minutes:02d}:{seconds:02d}.{milliseconds:03d}",
             True,
             (255, 255, 255),
         )
@@ -196,8 +225,8 @@ def draw_screen_end(
     )
 
     # Топ победителей
-    top_title = font.render("Топ-5 победителей:", True, (255, 255, 255))
-    screen.blit(top_title, (SCREEN_WIDTH // 2 - top_title.get_width() // 2, 250))
+    top_title = font.render("Лучшие победители:", True, (255, 255, 255))
+    screen.blit(top_title, (SCREEN_WIDTH // 2 - top_title.get_width() // 2, 200))
 
     if top_winners:
         for i, (name, score, time_val) in enumerate(top_winners):
@@ -211,15 +240,16 @@ def draw_screen_end(
             )
             screen.blit(
                 player_text,
-                (SCREEN_WIDTH // 2 - player_text.get_width() // 2, 300 + i * 30),
+                (SCREEN_WIDTH // 2 - player_text.get_width() // 2, 240 + i * 25),
             )
     else:
-        no_winners = font.render("Пока нет победителей", True, (200, 200, 200))
-        screen.blit(no_winners, (SCREEN_WIDTH // 2 - no_winners.get_width() // 2, 300))
+        no_winners = small_font.render(
+            "Пока нет победителей! Станьте первым!", True, (200, 200, 200)
+        )
+        screen.blit(no_winners, (SCREEN_WIDTH // 2 - no_winners.get_width() // 2, 240))
 
 
 def main():
-
     SCREEN_WIDTH, SCREEN_HEIGHT, WINNING_SCORE, screen, clock, font, small_font, db = (
         init_game()
     )
@@ -233,14 +263,14 @@ def main():
             break
 
         player = Player(
-            SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100, SCREEN_WIDTH, SCREEN_HEIGHT
+            SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, SCREEN_WIDTH, SCREEN_HEIGHT
         )
         crystals = []
         asteroids = []
         spawn_timer = 0
         game_active = True
         victory = False
-
+        stars = create_stars(SCREEN_WIDTH, SCREEN_HEIGHT)
         start_time = time.time()
 
         while game_active and running:
@@ -251,7 +281,7 @@ def main():
                     running = False
                     game_active = False
 
-            dx, dy = name_input()
+            dx, dy = handle_input()
             player.move(dx, dy)
 
             spawn_timer += 1
@@ -266,7 +296,7 @@ def main():
                 player, crystals, asteroids, SCREEN_HEIGHT, WINNING_SCORE
             )
 
-            draw_screen(
+            draw_game_screen(
                 screen,
                 player,
                 crystals,
@@ -275,7 +305,8 @@ def main():
                 game_time,
                 font,
                 SCREEN_WIDTH,
-                WINNING_SCORE
+                stars,
+                SCREEN_HEIGHT,
             )
             pygame.display.flip()
             clock.tick(60)
@@ -298,7 +329,7 @@ def main():
                         if event.key == pygame.K_SPACE:
                             waiting = False
 
-                draw_screen_end(
+                draw_game_over_screen(
                     screen,
                     victory,
                     player,
