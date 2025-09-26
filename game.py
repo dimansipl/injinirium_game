@@ -193,7 +193,7 @@ def draw_game_over_screen(
     milliseconds = int((final_time - int(final_time)) * 1000)
 
     if victory:
-        game_over_text = font.render("ПОБЕДА! 🏆", True, (50, 255, 50))
+        game_over_text = font.render("ПОБЕДА!", True, (50, 255, 50))
         score_text = font.render(
             f"Собрано кристаллов: {player.score}/{WINNING_SCORE}", True, (255, 255, 255)
         )
