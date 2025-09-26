@@ -1,6 +1,7 @@
 import pygame
 import sys
 import random
+import time
 from classes.player import Player
 from classes.object import Crystal, Asteroid
 from database.database_manager import GameDatabase
@@ -18,7 +19,7 @@ clock = pygame.time.Clock()
 
 db = GameDatabase()
 
-WINNING_SCORE = 100
+WINNING_SCORE = 5
 
 running = True
 
@@ -59,8 +60,13 @@ while running:
     asteroids = []
     spawn_timer = 0
     game_active = True
+    virtory = False
+
+    start_time = time.time()
+    game_time = 0
 
     while game_active and running:
+        game_time = time.time() - start_time
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -79,6 +85,7 @@ while running:
             dy += 1
     
         player.move(dx,dy)
+
         spawn_timer += 1
         if spawn_timer  >= 30:
             spawn_timer = 0
@@ -116,6 +123,10 @@ while running:
         for asteroid in asteroids:
             asteroid.draw(screen)
 
+        minutes = int(game_time) // 60
+        seconds = int(game_time) % 60
+        milseconds = int((game_time - int(game_time))*1000)
+        time_text = font.render(f'Время: {minutes:02d}:{seconds:02d}:{milseconds:02d}', True, (255,255,255))
         score_text = font.render(f'Очки: {player.score}', True, (255, 255, 255))
         lives_text = font.render(f'Жизни: {player.lives}', True, (255, 255, 255))
         name_text = font.render(f'Игрок: {player_name}', True, (255,255,255))
@@ -123,13 +134,16 @@ while running:
         screen.blit(score_text, (10, 10))
         screen.blit(lives_text, (SCREEN_WIDTH - 150, 10))
         screen.blit(name_text, (10, 50))
+        screen.blit(time_text, (SCREEN_WIDTH - 250, 50))
 
         pygame.display.flip()
         clock.tick(60)
 
 
     if running:
-        db.save_score(player_name, player.score)
+        final_time = time.time() - start_time
+        if victory:
+            db.save_winner(player_name, player.score, final_time)
         waiting = True
         while waiting and running:
             for event in pygame.event.get():
@@ -141,26 +155,38 @@ while running:
                         waiting = False
 
             screen.fill((20,20,40))
+
+            minutes = int(final_time) // 60
+            seconds = int(final_time) % 60
+            milseconds = int((final_time - int(final_time))*1000)
             if victory:
                 game_over_text = font.render('Победа!', True, (50,255,50))
                 score_text = font.render(f'Ваш счет: {player.score} . Вы собрали нужное количество кристаллов! ', True, (255, 255,255))
+                time_message = font.render(f'Время прохождения: {minutes:02d}:{seconds:02d}:{milseconds:03d}', True, (255,255,255))
             else:
                 game_over_text = font.render('ИГРА ОКОНЧЕНА!', True, (255, 150, 50))
                 score_text = font.render(f'Ваш счет: {player.score}. Нужное количество кристаллов не собрано. Осталось: {WINNING_SCORE - player.score}', True, (255, 255,255))
+                time_message = font.render(f'Вы продержались: {minutes:02d}:{seconds:02d}:{milseconds:03d}', True, (255,255,255))
             restart = small_font.render(f'Пробел - новая игра', True, (200,200,200))
 
-            screen.blit(game_over_text, (SCREEN_WIDTH//2 - game_over_text.get_width()//2, 100))
-            screen.blit(score_text, (SCREEN_WIDTH//2 - score_text.get_width()//2, 150))
+            screen.blit(game_over_text, (SCREEN_WIDTH//2 - game_over_text.get_width()//2, 50))
+            screen.blit(score_text, (SCREEN_WIDTH//2 - score_text.get_width()//2, 100))
             screen.blit(restart, (SCREEN_WIDTH//2 - restart.get_width()//2, SCREEN_HEIGHT - 50))
+            screen.blit(time_message, (SCREEN_WIDTH//2 - time_message.get_width()//2, 150))
             # Топ-5 игроков из базы данных
-            top_players = db.get_top_scores()
-            top_title = font.render('Топ-5 игроков:', True, (255, 255, 255))
+            top_winners = db.get_top_winners()
+            top_title = font.render('Топ-5 победителей:', True, (255, 255, 255))
             screen.blit(top_title, (SCREEN_WIDTH//2 - top_title.get_width()//2, 250))
-            
-            for i, (name, score) in enumerate(top_players):
-                player_text = font.render(f'{i+1}. {name}: {score} очков', True, (255, 255, 255))
-                screen.blit(player_text, (SCREEN_WIDTH//2 - player_text.get_width()//2, 300 + i * 30))
-            
+            if top_winners:
+                for i, (name, score, time_val) in enumerate(top_winners):
+                    min_val = int(time_val) // 60
+                    sec_val = int(time_val) % 60
+                    ms_val = int((time_val - int(time_val)) * 1000)
+                    player_text = small_font.render(f'{i+1}. {name}: {min_val:02d}:{sec_val:02d}.{ms_val:03d}', True, (255, 255, 255))
+                    screen.blit(player_text, (SCREEN_WIDTH//2 - player_text.get_width()//2, 300 + i * 30))
+            else:
+                no_winners = font.render('Пока нет победителей', True, (200,200,200))
+                screen.blit(no_winners, (SCREEN_WIDTH//2 - no_winners.get_width()//2, 300))
             pygame.display.flip()
             clock.tick(60)
 
