@@ -54,7 +54,7 @@ while running:
     if not running:
         break
 
-    player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 80, SCREEN_WIDTH)
+    player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100, SCREEN_WIDTH, SCREEN_HEIGHT)
     crystals = []
     asteroids = []
     spawn_timer = 0
@@ -68,11 +68,17 @@ while running:
                 game_active = False
     
         keys = pygame.key.get_pressed()
+        dx, dy = 0,0
         if keys[pygame.K_a]:
-            player.move(-1)
+            dx -= 1
         if keys[pygame.K_d]:
-            player.move(1)
+            dx += 1
+        if keys[pygame.K_w]:
+            dy -= 1
+        if keys[pygame.K_s]:
+            dy += 1
     
+        player.move(dx,dy)
         spawn_timer += 1
         if spawn_timer  >= 30:
             spawn_timer = 0
