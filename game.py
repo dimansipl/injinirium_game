@@ -26,7 +26,34 @@ spawn_timer = 0
 running = True
 game_active = True
 
-player_name = input()
+player_name = ""
+input_text = ""
+taking_name = True
+while taking_name and running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+            taking_name = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN and input_text.strip():
+                player_name = input_text.strip()
+                taking_name = False
+            elif event.key == pygame.K_BACKSPACE:
+                input_text = input_text[:-1]
+            elif event.unicode:
+                input_text += event.unicode
+    screen.fill((0,0,0))
+    text1 = font.render("Введите имя:", True, (255,255,255))
+    text2 = font.render(input_text, True, (255,255,255))
+    text3 = small_font.render("Нажмите ENTER", True, (200,200,200))
+
+    screen.blit(text1, (SCREEN_WIDTH//2 - text1.get_width()//2, 250))
+    screen.blit(text2, (SCREEN_WIDTH//2 - text2.get_width()//2, 300))
+    screen.blit(text3, (SCREEN_WIDTH//2 - text3.get_width()//2, 350))
+
+    pygame.display.flip()
+    clock.tick(60)
+
 name_input_active = False 
 
 
