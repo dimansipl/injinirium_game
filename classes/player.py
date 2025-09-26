@@ -1,5 +1,6 @@
 import pygame
 
+
 class Player:
     def __init__(self, x, y, screen_width, screen_height):
         self.rect = pygame.Rect(x, y, 50, 30)
@@ -25,10 +26,10 @@ class Player:
 
     def draw(self, screen):
         pygame.draw.rect(screen, self.color, self.rect)
-    
+
     def add_score(self, points):
         self.score += points
 
-    def take_damage(self, damage = 1):
+    def take_damage(self, damage=1):
         self.lives -= damage
         return self.lives > 0
