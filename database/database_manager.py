@@ -2,16 +2,18 @@ import sqlite3
 import os
 import sys
 
+
 class GameDatabase:
     def __init__(self):
-        if getattr(sys, 'frozen', False):
-           
-            base_path = sys._MEIPASS
+        if getattr(sys, "frozen", False):
+            base_path = os.path.dirname(sys.executable)
         else:
-        
-            base_path = os.path.dirname(__file__)
-        
-        self.db_file = os.path.join(base_path, "database", "records.db")
+            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        db_dir = os.path.join(base_path, "database")
+        os.makedirs(db_dir, exist_ok=True)
+
+        self.db_file = os.path.join(db_dir, "records.db")
         self.create_table()
 
     def create_table(self):
