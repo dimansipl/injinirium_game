@@ -10,13 +10,15 @@ pygame.init()
 font = pygame.font.SysFont(None, 36)
 small_font = pygame.font.SysFont(None, 20)
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = 1024
+SCREEN_HEIGHT = 768
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Космический сборщик")
 clock = pygame.time.Clock()
 
 db = GameDatabase()
+
+WINNING_SCORE = 100
 
 running = True
 
@@ -84,7 +86,9 @@ while running:
             if crystal.rect.colliderect(player.rect):
                 player.add_score(crystal.points)
                 crystals.remove(crystal)
-                print(f"Собран кристалл! Очки: {player.score}")
+                if player.score >= WINNING_SCORE:
+                    game_active = False
+                    victory = True
             elif crystal.is_off_screen(SCREEN_HEIGHT):
                 crystals.remove(crystal)
     
@@ -93,7 +97,7 @@ while running:
             if asteroid.rect.colliderect(player.rect):
                 if not player.take_damage(asteroid.damages):
                     game_active = False
-                    print("Игра окончена")
+                    victory = False
                 asteroids.remove(asteroid)
             elif asteroid.is_off_screen(SCREEN_HEIGHT):
                 asteroids.remove(asteroid)
@@ -131,8 +135,12 @@ while running:
                         waiting = False
 
             screen.fill((20,20,40))
-            game_over_text = font.render('ИГРА ОКОНЧЕНА!', True, (255, 150, 50))
-            score_text = font.render(f'Ваш счет: {player.score} ', True, (255, 255,255))
+            if victory:
+                game_over_text = font.render('Победа!', True, (50,255,50))
+                score_text = font.render(f'Ваш счет: {player.score} . Вы собрали нужное количество кристаллов! ', True, (255, 255,255))
+            else:
+                game_over_text = font.render('ИГРА ОКОНЧЕНА!', True, (255, 150, 50))
+                score_text = font.render(f'Ваш счет: {player.score}. Нужное количество кристаллов не собрано. Осталось: {WINNING_SCORE - player.score}', True, (255, 255,255))
             restart = small_font.render(f'Пробел - новая игра', True, (200,200,200))
 
             screen.blit(game_over_text, (SCREEN_WIDTH//2 - game_over_text.get_width()//2, 100))
